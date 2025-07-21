@@ -1,23 +1,18 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Create an S3 bucket and EC2 instance via Jenkins
-
+Description: Create S3 bucket and SQS queue with unique suffix
+ 
 Parameters:
-  EC2KeyName:
-    Type: AWS::EC2::KeyPair::KeyName
-    Description: Name of existing EC2 KeyPair
-
+  UniqueSuffix:
+    Type: String
+    Description: Unique suffix for resource names
+ 
 Resources:
-  MyBucket:
+  MyS3Bucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub '${AWS::StackName}-bucket'
-
-  MyEC2:
-    Type: AWS::EC2::Instance
+      BucketName: !Sub "utkarsh-bucket-${UniqueSuffix}"
+ 
+  MySQSQueue:
+    Type: AWS::SQS::Queue
     Properties:
-      InstanceType: t3.micro
-      KeyName: !Ref EC2KeyName
-      ImageId: ami-0abcdef1234567890  # replace with a valid region-specific AMI
-      Tags:
-        - Key: Name
-          Value: !Sub '${AWS::StackName}-ec2'
+      QueueName: !Sub "utkarsh-queue-${UniqueSuffix}"
