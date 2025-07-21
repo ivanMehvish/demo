@@ -1,16 +1,28 @@
 pipeline {
   agent any
   parameters {
-    string(name: 'STACK_NAME', defaultValue: 'mypipeline-infra', description: 'CloudFormation stack name')
-    string(name: 'EC2_KEY', defaultValue: '', description: 'Existing EC2 KeyPair name')
+    string(name: 'STACK_NAME', defaultValue: 'mypipeline-infra')
+    string(name: 'EC2_KEY', defaultValue: '')
   }
   environment {
-    AWS_REGION = 'ap-south-1'  // adjust to your region
+    AWS_REGION = 'us-east-1'
   }
   stages {
     stage('Validate Template') {
       steps {
         sh "aws cloudformation validate-template --template-body file://infra.yaml"
+      }
+    }
+    stage('Cleanup ChangeSets') {
+      steps {
+        sh """
+          for cs in \$(aws cloudformation list-change-sets --stack-name ${params.STACK_NAME} \
+            --query 'Summaries[?Status==\`FAILED\`].ChangeSetName' \
+            --output text); do
+            aws cloudformation delete-change-set \
+              --stack-name ${params.STACK_NAME} --change-set-name "\$cs"
+          done
+        """
       }
     }
     stage('Deploy Stack') {
@@ -21,7 +33,8 @@ pipeline {
             --template-file infra.yaml \
             --parameter-overrides EC2KeyName=${params.EC2_KEY} \
             --region ${env.AWS_REGION} \
-            --capabilities CAPABILITY_NAMED_IAM
+            --capabilities CAPABILITY_NAMED_IAM \
+            --no-fail-on-empty-changeset
         """
       }
     }
