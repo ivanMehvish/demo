@@ -5,7 +5,7 @@ pipeline {
     string(name: 'EC2_KEY', defaultValue: '')
   }
   environment {
-    AWS_REGION = 'ap-souht-1'
+    AWS_REGION = 'ap-south-1'
   }
   stages {
     stage('Validate Template') {
