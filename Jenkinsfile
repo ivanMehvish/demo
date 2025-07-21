@@ -13,20 +13,19 @@ pipeline {
         sh "aws cloudformation validate-template --template-body file://infra.yaml"
       }
     }
-    stage('Cleanup Failed ChangeSets') {
-      steps {
-        script {
-          sh """
-            aws cloudformation list-change-sets \\
-              --stack-name ${params.STACK_NAME} \\
-              --query "Summaries[?Status=='FAILED'].ChangeSetName" \\
-              --output text --region ${env.AWS_REGION} | \\
-            xargs -r -n1 aws cloudformation delete-change-set \\
-              --stack-name ${params.STACK_NAME} --region ${env.AWS_REGION}
-          """
-        }
-      }
-    }
+    stage('Deploy Stack') {
+  steps {
+    sh """
+      aws cloudformation deploy \
+        --template-file infra.yaml \
+        --stack-name ${params.STACK_NAME} \
+        --parameter-overrides EC2KeyName=${params.EC2_KEY} \
+        --region ${env.AWS_REGION} \
+        --capabilities CAPABILITY_NAMED_IAM \
+        --no-fail-on-empty-changeset
+    """
+  }
+}
     stage('Deploy Stack') {
       steps {
         sh """
